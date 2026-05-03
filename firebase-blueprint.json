@@ -1,0 +1,148 @@
+{
+  "entities": {
+    "profile": {
+      "title": "Profile",
+      "description": "User profile containing basic info and roles.",
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string" },
+        "college_email": { "type": "string" },
+        "game_tags": { "type": "object" },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "created_at": { "type": "string" }
+      },
+      "required": ["full_name", "college_email", "role", "created_at"]
+    },
+    "team": {
+      "title": "Team",
+      "description": "A team participating in tournaments.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "game": { "type": "string" },
+        "captain_id": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["name", "game", "captain_id", "created_at"]
+    },
+    "team_member": {
+      "title": "Team Member",
+      "description": "A member joining a team (status: pending, approved).",
+      "type": "object",
+      "properties": {
+        "team_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved"] },
+        "joined_at": { "type": "string" }
+      },
+      "required": ["team_id", "user_id", "status"]
+    },
+    "tournament": {
+      "title": "Tournament",
+      "description": "A tournament instance.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "game": { "type": "string" },
+        "format": { "type": "string" },
+        "max_teams": { "type": "number" },
+        "prize_pool": { "type": "string" },
+        "status": { "type": "string" },
+        "starts_at": { "type": "string" },
+        "bracket_data": { "type": "object" },
+        "created_by": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["name", "game", "format", "status", "created_by", "created_at"]
+    },
+    "tournament_registration": {
+      "title": "Tournament Registration",
+      "description": "Team registration for a tournament.",
+      "type": "object",
+      "properties": {
+        "tournament_id": { "type": "string" },
+        "team_id": { "type": "string" },
+        "registered_at": { "type": "string" },
+        "seed": { "type": "number" }
+      },
+      "required": ["tournament_id", "team_id", "registered_at"]
+    },
+    "match": {
+      "title": "Match",
+      "description": "A scheduled match within a tournament.",
+      "type": "object",
+      "properties": {
+        "tournament_id": { "type": "string" },
+        "round": { "type": "number" },
+        "team1_id": { "type": "string" },
+        "team2_id": { "type": "string" },
+        "winner_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "awaiting_result", "disputed", "completed"] },
+        "scheduled_at": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["tournament_id", "round", "status", "created_at"]
+    },
+    "match_result": {
+      "title": "Match Result",
+      "description": "A submitted result for a match.",
+      "type": "object",
+      "properties": {
+        "match_id": { "type": "string" },
+        "submitted_by_team": { "type": "string" },
+        "claimed_winner": { "type": "string" },
+        "screenshot_url": { "type": "string" },
+        "submitted_at": { "type": "string" }
+      },
+      "required": ["match_id", "submitted_by_team", "claimed_winner", "submitted_at"]
+    },
+    "dispute": {
+      "title": "Dispute",
+      "description": "A dispute raised due to conflicting results.",
+      "type": "object",
+      "properties": {
+        "match_id": { "type": "string" },
+        "raised_by": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "resolved"] },
+        "admin_note": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["match_id", "raised_by", "reason", "status", "created_at"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/profile" },
+      "description": "User profiles. ID matches Firebase Auth UID."
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/team" },
+      "description": "Teams."
+    },
+    "/team_members/{membershipId}": {
+      "schema": { "$ref": "#/entities/team_member" },
+      "description": "Many-to-many relationship mapping users joining teams."
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": { "$ref": "#/entities/tournament" },
+      "description": "Tournaments."
+    },
+    "/tournament_registrations/{registrationId}": {
+      "schema": { "$ref": "#/entities/tournament_registration" },
+      "description": "Team registrations for tournaments."
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/match" },
+      "description": "Matches in tournaments."
+    },
+    "/match_results/{resultId}": {
+      "schema": { "$ref": "#/entities/match_result" },
+      "description": "Submitted results for matches."
+    },
+    "/disputes/{disputeId}": {
+      "schema": { "$ref": "#/entities/dispute" },
+      "description": "Disputes."
+    }
+  }
+}

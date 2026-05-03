@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == "admin"; 
+    }
+
+    // Profiles
+    match /profiles/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId && !("role" in request.resource.data) || isAdmin();
+    }
+
+    // Teams
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.captain_id == request.auth.uid || isAdmin();
+    }
+
+    // Team Members (join requests)
+    match /team_members/{membershipId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      // Allow update if captain (approving) or user (canceling)
+      allow update: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/teams/$(resource.data.team_id)).data.captain_id == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.user_id == request.auth.uid) || (isSignedIn() && get(/databases/$(database)/documents/teams/$(resource.data.team_id)).data.captain_id == request.auth.uid);
+    }
+
+    // Tournaments - Admin only for writes
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Registrations - captains or admin
+    match /tournament_registrations/{regId} {
+      allow read: if true;
+      allow create, delete: if isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/teams/$(request.resource.data.team_id)).data.captain_id == request.auth.uid);
+    }
+
+    // Matches
+    match /matches/{matchId} {
+      allow read: if true;
+      // Written by backend API normally
+      allow write: if isAdmin(); 
+    }
+
+    // Match Results
+    // Users submit via API, or we can allow client writes here
+    match /match_results/{resultId} {
+      allow read: if true;
+      allow create: if isSignedIn(); // Add more strict checks if needed, but API is preferred
+      allow write: if isAdmin();
+    }
+
+    // Disputes
+    match /disputes/{disputeId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
